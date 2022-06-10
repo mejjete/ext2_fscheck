@@ -1,0 +1,288 @@
+#ifndef EXT2FS_H
+#define EXT2FS_H
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
+#include <string.h>
+#include <fcntl.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <linux/kernel.h>
+
+typedef uint8_t u8;
+typedef uint16_t u16;
+typedef uint32_t u32;
+typedef uint64_t u64;
+
+typedef u32 block_t;
+typedef u32 bitmap_id;
+
+extern size_t block_size;
+
+/**
+ * Constants relative to the data blocks
+ */
+#define	EXT2_NDIR_BLOCKS		12
+#define	EXT2_IND_BLOCK			EXT2_NDIR_BLOCKS
+#define	EXT2_DIND_BLOCK			(EXT2_IND_BLOCK + 1)
+#define	EXT2_TIND_BLOCK			(EXT2_DIND_BLOCK + 1)
+#define	EXT2_N_BLOCKS			(EXT2_TIND_BLOCK + 1)
+
+#define EXT2_BAD_BLOCK_OFFSET	((off_t ) -1)
+
+/**
+ * Superblock has fixed size
+ */
+#define EXT2_SUPER_SIZE		1024
+#define EXT2_MAGIC  		0xEF53
+
+#define EXT2_IS_SPARSE_FEAT(X) (((X)->s_feature_ro_compat & 0x0001) != 0)
+
+/**
+ * Function wrappers
+ */
+#define ext2_get_inode_bm_entry(WRAP, GD, BIT_ID) \
+	get_bitmap_entry((WRAP), (GD)->bg_inode_bitmap, (WRAP)->sb.s_inodes_per_group, BIT_ID)
+
+#define ext2_get_data_bm_entry(WRAP, GB, BIT_ID) \
+	get_bitmap_entry((WRAP), (GB)->bg_block_bitmap, (WRAP)->sb.s_blocks_per_group, BIT_ID)
+
+
+/**
+ * Structure of the super block (from ext2_fs.h)
+ *
+ * Packed attribute specified to simplify read-and-match the 
+ * supeblock structure. Most majority of fields are redudant
+ * and do not used for intergity checking
+ */
+struct __attribute__ ((__packed__)) ext2_super_block 
+{
+    __le32  s_inodes_count;		    /* Inodes count */
+	__le32	s_blocks_count;		    /* Blocks count */
+	__le32	s_r_blocks_count;	    /* Reserved blocks count */
+	__le32	s_free_blocks_count;	/* Free blocks count */
+	__le32	s_free_inodes_count;	/* Free inodes count */
+	__le32	s_first_data_block;	    /* First Data Block */
+	__le32	s_log_block_size;	    /* Block size */
+	__le32	s_log_frag_size;	    /* Fragment size */
+	__le32	s_blocks_per_group;	    /* # Blocks per group */
+	__le32	s_frags_per_group;	    /* # Fragments per group */
+	__le32	s_inodes_per_group;	    /* # Inodes per group */
+	__le32	s_mtime;		        /* Mount time */
+	__le32	s_wtime;		        /* Write time */
+	__le16	s_mnt_count;		    /* Mount count */
+	__le16	s_max_mnt_count;	    /* Maximal mount count */
+	__le16	s_magic;		        /* Magic signature */
+	__le16	s_state;		        /* File system state */
+	__le16	s_errors;		        /* Behaviour when detecting errors */
+	__le16	s_minor_rev_level; 	    /* minor revision level */
+	__le32	s_lastcheck;		    /* time of last check */
+	__le32	s_checkinterval;	    /* max. time between checks */
+	__le32	s_creator_os;		    /* OS */
+	__le32	s_rev_level;		    /* Revision level */
+	__le16	s_def_resuid;	    	/* Default uid for reserved blocks */
+	__le16	s_def_resgid;	    	/* Default gid for reserved blocks */
+
+
+    /**
+     * EXT2_DYNAMIC_REV Specific
+     */
+    __le32	s_first_ino; 				/* First non-reserved inode */
+	__le16  s_inode_size; 				/* size of inode structure */
+	__le16	s_block_group_nr; 			/* block group # of this superblock */
+	__le32	s_feature_compat; 			/* compatible feature set */
+	__le32	s_feature_incompat; 		/* incompatible feature set */
+	__le32	s_feature_ro_compat; 		/* readonly-compatible feature set */
+	__u8	s_uuid[16];					/* 128-bit uuid for volume */
+	char	s_volume_name[16]; 			/* volume name */
+	char	s_last_mounted[64]; 		/* directory where last mounted */
+	__le32	s_algorithm_usage_bitmap; 	/* For compression */
+
+
+	/**
+	 * Performance hints.  Directory preallocation should only
+	 * happen if the EXT2_COMPAT_PREALLOC flag is on.
+	 */
+	__u8	s_prealloc_blocks;		/* Nr of blocks to try to preallocate*/
+	__u8	s_prealloc_dir_blocks;	/* Nr to preallocate for dirs */
+	__u16	s_padding1;
+
+
+	/**
+	 * Journaling support valid if EXT3_FEATURE_COMPAT_HAS_JOURNAL set.
+	 */
+	__u8	s_journal_uuid[16];	/* uuid of journal superblock */
+	__u32	s_journal_inum;		/* inode number of journal file */
+	__u32	s_journal_dev;		/* device number of journal file */
+	__u32	s_last_orphan;		/* start of list of inodes to delete */
+	__u32	s_hash_seed[4];		/* HTREE hash seed */
+	__u8	s_def_hash_version;	/* Default hash version to use */
+	__u8	s_reserved_char_pad;
+	__u16	s_reserved_word_pad;
+	__le32	s_default_mount_opts;
+ 	__le32	s_first_meta_bg; 	/* First metablock block group */
+	__u32	s_reserved[190];	/* Padding to the end of the block */
+};
+
+/**
+ * Structure of a blocks group descriptor (from ext2_fs.h)
+ */
+struct __attribute__ ((__packed__)) ext2_group_desc
+{
+	__le32	bg_block_bitmap;		    /* Blocks bitmap block */
+	__le32	bg_inode_bitmap;		    /* Inodes bitmap block */
+	__le32	bg_inode_table;		        /* Inodes table block */
+	__le16	bg_free_blocks_count;	    /* Free blocks count */
+	__le16	bg_free_inodes_count;	    /* Free inodes count */
+	__le16	bg_used_dirs_count;	        /* Directories count */
+	__le16	bg_pad;
+	__le32	bg_reserved[3];
+};
+
+/**
+ * Structure of an inode on the disk (from ext2_fs.h)
+ */
+struct __attribute__ ((__packed__)) ext2_inode 
+{
+	__le16	i_mode;				/* File mode */
+	__le16	i_uid;				/* Low 16 bits of Owner Uid */
+	__le32	i_size;				/* Size in bytes */
+	__le32	i_atime;			/* Access time */
+	__le32	i_ctime;			/* Creation time */
+	__le32	i_mtime;			/* Modification time */
+	__le32	i_dtime;			/* Deletion Time */
+	__le16	i_gid;				/* Low 16 bits of Group Id */
+	__le16	i_links_count;		/* Links count */
+	__le32	i_blocks;			/* Blocks count */
+	__le32	i_flags;			/* File flags */
+	union {
+		struct {
+			__le32  l_i_reserved1;
+		} linux1;
+		struct {
+			__le32  h_i_translator;
+		} hurd1;
+		struct {
+			__le32  m_i_reserved1;
+		} masix1;
+	} osd1;								/* OS dependent 1 */
+	__le32	i_block[EXT2_N_BLOCKS];		/* Pointers to blocks */
+	__le32	i_generation;				/* File version (for NFS) */
+	__le32	i_file_acl;					/* File ACL */
+	__le32	i_dir_acl;					/* Directory ACL */
+	__le32	i_faddr;					/* Fragment address */
+	union {
+		struct {
+			__u8	l_i_frag;			/* Fragment number */
+			__u8	l_i_fsize;			/* Fragment size */
+			__u16	i_pad1;
+			__le16	l_i_uid_high;		/* these 2 fields    */
+			__le16	l_i_gid_high;		/* were reserved2[0] */
+			__u32	l_i_reserved2;
+		} linux2;
+		struct {
+			__u8	h_i_frag;			/* Fragment number */
+			__u8	h_i_fsize;			/* Fragment size */
+			__le16	h_i_mode_high;
+			__le16	h_i_uid_high;
+			__le16	h_i_gid_high;
+			__le32	h_i_author;
+		} hurd2;
+		struct {
+			__u8	m_i_frag;			/* Fragment number */
+			__u8	m_i_fsize;			/* Fragment size */
+			__u16	m_pad1;
+			__u32	m_i_reserved2[2];
+		} masix2;
+	} osd2;								/* OS dependent 2 */
+};
+
+/**
+ * The new version of the directory entry.  Since EXT2 structures are
+ * stored in intel byte order, and the name_len field could never be
+ * bigger than 255 chars, it's safe to reclaim the extra byte for the
+ * file_type field. (from ext2_fs.h)
+ */
+struct ext2_dir_entry_2
+{
+	__le32	inode;			/* Inode number */
+	__le16	rec_len;		/* Directory entry length */
+	__u8	name_len;		/* Name length */
+	__u8	file_type;
+	char	name[];			/* File name, up to EXT2_NAME_LEN */
+};
+
+struct ext2_sb_wrap
+{
+	dev_t device;					/* Device ID on which filesystem is resides */
+	struct ext2_super_block sb;		/* Super block */
+};
+
+/**
+ * EXT2 error codes
+ */
+enum ext2_error_code
+{
+	EXT2_SUPER_BLK_ERR = 1,
+	EXT2_SUPER_IND_PER_GRP_ERR,
+	EXT2_SUPER_REV_ERR,
+	EXT2_SUPER_IND_SZ_ERR,
+	EXT2_SUPER_BLK_PER_GRP_ERR,
+	EXT2_SUPER_BLK_CNT_ERR
+};
+
+typedef enum ext2_error_code ext2_err_t;
+
+/**
+ * Befor use, block_size must be properly initialized
+ */
+static inline off_t block_seek(dev_t device, block_t block_id, int whence)
+{
+	return lseek64(device, block_id * block_size, whence);
+};
+
+/* ext2_func.c */
+
+/** 
+ * @brief Returns value from the bitmap:
+ * 1 	- bitmap entry is in use
+ * 0 	- bitmap entry is free
+ * < 0 	- invalid bitmap index
+ */
+u8 get_bitmap_entry(struct ext2_sb_wrap *, block_t, size_t, bitmap_id);
+
+/**
+ * @brief Opens filesystem at specified location
+ */
+struct ext2_sb_wrap open_ext2_filsys(const char *path, ...);
+
+/**
+ * @brief Returns pointer to statically allocated inode structure 
+ * and NULL if inode index is not valid
+ */
+struct ext2_inode* ext2_get_inode_entry(struct ext2_sb_wrap*, u32);
+
+/**
+ * @brief Returns pointer to statically allocated group descriptor table entry at given index
+ * and NULL if group descriptor table index is not valid 
+ */
+struct ext2_group_desc* ext2_get_group_desc(struct ext2_sb_wrap *, u32);
+
+/**
+ * @brief Returns pointer to statically allocated super block structure
+ * and NULL if superblock is violated
+ */
+struct ext2_super_block *ext2_get_superblock(dev_t, block_t);
+
+/**
+ * @brief Checks superblock consistency
+ */
+ext2_err_t ext2_check_superblock(dev_t dev, struct ext2_super_block *);
+
+void err_sys(const char *);
+
+#endif // EXT2FS_H
