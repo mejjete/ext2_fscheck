@@ -129,12 +129,12 @@ ext2_err_t ext2_check_superblock(dev_t dev, struct ext2_super_block *sb)
         u32 group_count = sb->s_inodes_count / sb->s_inodes_per_group;
         u32 total_block_count = group_count * sb->s_blocks_per_group;
         
-        if(total_block_count > sb->s_blocks_count)
+        if(sb->s_blocks_count > total_block_count)
             return EXT2_SUPER_BLK_CNT_ERR;
         
         /* Additionally check for whether we are within device's bound */
         off_t last = lseek64(dev, 0, SEEK_END);
-        if(last < block_size * total_block_count)
+        if(last < block_size * sb->s_blocks_count)
             return EXT2_SUPER_BLK_CNT_ERR;
     }
 
