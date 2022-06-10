@@ -134,7 +134,8 @@ ext2_err_t ext2_check_superblock(dev_t dev, struct ext2_super_block *sb)
         
         /* Additionally check for whether we are within device's bound */
         off_t last = lseek64(dev, 0, SEEK_END);
-        if(last < block_size * sb->s_blocks_count)
+        off_t bts_cnt = block_size * sb->s_blocks_count; 
+        if(last < bts_cnt)
             return EXT2_SUPER_BLK_CNT_ERR;
     }
 
