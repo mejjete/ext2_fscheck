@@ -20,4 +20,5 @@ bool add_node(struct tnode *root, struct s_inode *new_item)
     struct tnode *new_node;
     if((new_node = create_node()) == NULL)
         return false;
+    return true;
 }
