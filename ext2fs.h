@@ -235,8 +235,8 @@ struct ext2_sb_wrap
 struct ext2_grpdesc
 {
 	u32 free_inodes_count;
-	u32 *inode_bitmap;		/* Inode bitmap related to particular group */
-	u32 *data_bitmap;		/* Data bitmap related to particular group */
+	u8 *inode_bitmap;		/* Inode bitmap related to particular group */
+	u8 *data_bitmap;		/* Data bitmap related to particular group */
 };
 
 typedef struct ext2_fscontext
