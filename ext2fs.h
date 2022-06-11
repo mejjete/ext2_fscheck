@@ -16,7 +16,6 @@
 typedef uint8_t u8;
 typedef uint16_t u16;
 typedef uint32_t u32;
-typedef uint64_t u64;
 
 typedef u32 block_t;
 typedef u32 bitmap_id;
@@ -35,12 +34,23 @@ extern size_t block_size;
 #define EXT2_BAD_BLOCK_OFFSET	((off_t ) -1)
 
 /**
- * Superblock has fixed size
+ * Superblock constants
  */
 #define EXT2_SUPER_SIZE		1024
 #define EXT2_MAGIC  		0xEF53
 
 #define EXT2_IS_SPARSE_FEAT(X) (((X)->s_feature_ro_compat & 0x0001) != 0)
+
+/**
+ * Inode modes
+ */
+#define EXT2_S_IFSOCK 	0xC000
+#define EXT2_S_IFLNK 	0xA000
+#define EXT2_S_IFREG	0x8000
+#define EXT2_S_IFBLK	0x6000
+#define EXT2_S_IFDIR	0x4000
+#define EXT2_S_IFCHR	0x2000
+#define EXT2_S_IFIFO	0x1000
 
 /**
  * Function wrappers
@@ -222,17 +232,40 @@ struct ext2_sb_wrap
 	struct ext2_super_block sb;		/* Super block */
 };
 
+struct ext2_grpdesc
+{
+	u32 free_inodes_count;
+	u32 *inode_bitmap;		/* Inode bitmap related to particular group */
+	u32 *data_bitmap;		/* Data bitmap related to particular group */
+};
+
+typedef struct ext2_fscontext
+{
+	struct tnode *fs_tree;			/* File system hierarchy */
+	struct tnode *unconnected;		/* Unconnected inodes */
+	struct ext2_sb_wrap sb_wrap;	/* Superblock instance */
+	struct ext2_grpdesc *grp_descs;	/* Group descriptor table */
+} ext2_context_t;
+
 /**
  * EXT2 error codes
  */
 enum ext2_error_code
 {
-	EXT2_SUPER_BLK_ERR = 1,
+	EXT2_NO_ERR,
+
+	/* Superblock error codes */
+
+	EXT2_SUPER_BLK_ERR,
 	EXT2_SUPER_IND_PER_GRP_ERR,
 	EXT2_SUPER_REV_ERR,
 	EXT2_SUPER_IND_SZ_ERR,
 	EXT2_SUPER_BLK_PER_GRP_ERR,
-	EXT2_SUPER_BLK_CNT_ERR
+	EXT2_SUPER_BLK_CNT_ERR,
+
+	/* Inode error codes */
+	
+	EXT2_INO_MODE_ERR,
 };
 
 typedef enum ext2_error_code ext2_err_t;
@@ -245,20 +278,7 @@ static inline off_t block_seek(dev_t device, block_t block_id, int whence)
 	return lseek64(device, block_id * block_size, whence);
 };
 
-/* ext2_func.c */
-
-/** 
- * @brief Returns value from the bitmap:
- * 1 	- bitmap entry is in use
- * 0 	- bitmap entry is free
- * < 0 	- invalid bitmap index
- */
-u8 get_bitmap_entry(struct ext2_sb_wrap *, block_t, size_t, bitmap_id);
-
-/**
- * @brief Opens filesystem at specified location
- */
-struct ext2_sb_wrap open_ext2_filsys(const char *path, ...);
+/* ext2_fscheck.c */
 
 /**
  * @brief Returns pointer to statically allocated inode structure 
@@ -283,6 +303,28 @@ struct ext2_super_block *ext2_get_superblock(dev_t, block_t);
  */
 ext2_err_t ext2_check_superblock(dev_t dev, struct ext2_super_block *);
 
-void err_sys(const char *);
+/**
+ * @brief Checks whether the group contains superblock copy based on 
+ * sparce feature. 
+ * Return value:
+ * 	0 - if group contains super block
+ * 	1 - if group does not contain super block
+ * -1 - invalid group index
+ */
+int ext2_is_grp_contains_sb(struct ext2_super_block *, u32);
+
+/**/
+ext2_err_t ext2_check_inode(struct ext2_inode *);
+
+
+/* pass1.c */
+
+/**/
+void ext2_fsck_pass1(ext2_context_t *);
+
+/* message.c */
+
+/**/
+const char *ext2_strerror(ext2_err_t);
 
 #endif // EXT2FS_H

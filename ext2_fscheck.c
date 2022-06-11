@@ -1,21 +1,19 @@
 #include <ext2fs.h>
+#include <misc.h>
 
 extern size_t block_size;
 
-struct ext2_context ext2_open_filsys(dev_t device);
-
-u8 get_bitmap_entry(struct ext2_sb_wrap *sb_wrap, block_t block_id, size_t size, bitmap_id bm_ind)
+int ext2_is_grp_contains_sb(struct ext2_super_block *sb, u32 grp_ind)
 {
-    if(bm_ind > size)
+    u32 group_count = sb->s_inodes_count / sb->s_inodes_per_group;
+    if(grp_ind > group_count)
         return -1;
 
-    bm_ind--;
-    u8 item;
-    block_seek(sb_wrap->device, block_id, SEEK_SET);
-    lseek64(sb_wrap->device, (bm_ind / 8), SEEK_CUR);
-    read(sb_wrap->device, &item, 1);
-    bm_ind -= 8 * (bm_ind / 8);
-    return (item >> bm_ind) & 1;
+    if(EXT2_IS_SPARSE_FEAT(sb))
+        if(is_power_of(grp_ind, 3) || is_power_of(grp_ind, 5) || is_power_of(grp_ind, 7))
+            return 1;
+
+    return 0;
 }
 
 struct ext2_inode* ext2_get_inode_entry(struct ext2_sb_wrap* sb_wrap, u32 inode_ind)
@@ -93,6 +91,7 @@ ext2_err_t ext2_check_superblock(dev_t dev, struct ext2_super_block *sb)
     }
 
     /* Check for an inode size */
+
     {
         if(sb->s_rev_level > 1)
             return EXT2_SUPER_REV_ERR;
@@ -109,19 +108,19 @@ ext2_err_t ext2_check_superblock(dev_t dev, struct ext2_super_block *sb)
         }
     }
 
-    /* Check for an inodes per group */
-    {
-        if(sb->s_inodes_per_group > (block_size * 8))
-            return EXT2_SUPER_IND_PER_GRP_ERR;
-        
-        if((sb->s_inodes_per_group % (block_size / sb->s_inode_size)) != 0)
-            return EXT2_SUPER_IND_PER_GRP_ERR;
-    }
-
     /* Check for a blocks per group */
     {
         if(sb->s_blocks_per_group > (block_size * 8))
             return EXT2_SUPER_BLK_PER_GRP_ERR;
+    }
+
+    /* Check for an inodes per group */
+    {
+        if(sb->s_inodes_per_group > (block_size * 8))
+            return EXT2_SUPER_IND_PER_GRP_ERR;
+
+        if((sb->s_inodes_per_group % (block_size / sb->s_inode_size)) != 0)
+            return EXT2_SUPER_IND_PER_GRP_ERR;
     }
 
     /* Check for a blocks count */
@@ -139,11 +138,41 @@ ext2_err_t ext2_check_superblock(dev_t dev, struct ext2_super_block *sb)
             return EXT2_SUPER_BLK_CNT_ERR;
     }
 
-    return 0;
+    return EXT2_NO_ERR;
 }
 
-void err_sys(const char *msg)
+static inline bool check_ino_mode(u32 mode, u32 flag)
 {
-    fprintf(stderr, "%s : %s\n", msg, strerror(errno));
-    exit(EXIT_FAILURE);
+    if((mode | flag) != flag)
+        return false;
+    return true;
+}
+
+ext2_err_t ext2_check_inode(struct ext2_inode *ino)
+{
+    /* Check for an inode mode */
+    {
+        u32 mask_ino = ino->i_mode & 0xF0000;
+        bool is_valid = false;
+
+        if(check_ino_mode(mask_ino, EXT2_S_IFREG))
+            is_valid = true;
+        else if(check_ino_mode(mask_ino, EXT2_S_IFSOCK))
+            is_valid = true;
+        else if(check_ino_mode(mask_ino, EXT2_S_IFLNK))
+            is_valid = true;
+        else if(check_ino_mode(mask_ino, EXT2_S_IFBLK))
+            is_valid = true;
+        else if(check_ino_mode(mask_ino, EXT2_S_IFDIR))
+            is_valid = true;
+        else if(check_ino_mode(mask_ino, EXT2_S_IFCHR))
+            is_valid = true;
+        else if(check_ino_mode(mask_ino, EXT2_S_IFIFO))
+            is_valid = true;
+        
+        if(!is_valid)
+            return EXT2_INO_MODE_ERR;
+    }
+
+    return EXT2_NO_ERR;
 }
