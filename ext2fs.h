@@ -13,14 +13,18 @@
 #include <sys/stat.h>
 #include <linux/kernel.h>
 
+
 typedef uint8_t u8;
 typedef uint16_t u16;
 typedef uint32_t u32;
 
+
 typedef u32 block_t;
 typedef u32 bitmap_id;
 
+
 extern size_t block_size;
+
 
 /**
  * Constants relative to the data blocks
@@ -31,7 +35,9 @@ extern size_t block_size;
 #define	EXT2_TIND_BLOCK			(EXT2_DIND_BLOCK + 1)
 #define	EXT2_N_BLOCKS			(EXT2_TIND_BLOCK + 1)
 
+
 #define EXT2_BAD_BLOCK_OFFSET	((off_t ) -1)
+
 
 /**
  * Superblock constants
@@ -39,7 +45,9 @@ extern size_t block_size;
 #define EXT2_SUPER_SIZE		1024
 #define EXT2_MAGIC  		0xEF53
 
+
 #define EXT2_IS_SPARSE_FEAT(X) (((X)->s_feature_ro_compat & 0x0001) != 0)
+
 
 /**
  * Inode modes
@@ -52,11 +60,19 @@ extern size_t block_size;
 #define EXT2_S_IFCHR	0x2000
 #define EXT2_S_IFIFO	0x1000
 
+
+/**
+ * Inode controlling flags
+ */
+#define EXT2_INDEX_FL	0x00001000
+
+
 /**
  * Function wrappers
  */
 #define ext2_get_inode_bm_entry(WRAP, GD, BIT_ID) \
 	get_bitmap_entry((WRAP), (GD)->bg_inode_bitmap, (WRAP)->sb.s_inodes_per_group, BIT_ID)
+
 
 #define ext2_get_data_bm_entry(WRAP, GB, BIT_ID) \
 	get_bitmap_entry((WRAP), (GB)->bg_block_bitmap, (WRAP)->sb.s_blocks_per_group, BIT_ID)
@@ -138,6 +154,7 @@ struct __attribute__ ((__packed__)) ext2_super_block
 	__u32	s_reserved[190];	/* Padding to the end of the block */
 };
 
+
 /**
  * Structure of a blocks group descriptor (from ext2_fs.h)
  */
@@ -152,6 +169,7 @@ struct __attribute__ ((__packed__)) ext2_group_desc
 	__le16	bg_pad;
 	__le32	bg_reserved[3];
 };
+
 
 /**
  * Structure of an inode on the disk (from ext2_fs.h)
@@ -211,6 +229,7 @@ struct __attribute__ ((__packed__)) ext2_inode
 	} osd2;								/* OS dependent 2 */
 };
 
+
 /**
  * The new version of the directory entry.  Since EXT2 structures are
  * stored in intel byte order, and the name_len field could never be
@@ -226,11 +245,13 @@ struct ext2_dir_entry_2
 	char	name[];			/* File name, up to EXT2_NAME_LEN */
 };
 
+
 struct ext2_sb_wrap
 {
 	dev_t device;					/* Device ID on which filesystem is resides */
 	struct ext2_super_block sb;		/* Super block */
 };
+
 
 struct ext2_grpdesc
 {
@@ -239,13 +260,13 @@ struct ext2_grpdesc
 	u8 *data_bitmap;		/* Data bitmap related to particular group */
 };
 
+
 typedef struct ext2_fscontext
 {
-	struct tnode *fs_tree;			/* File system hierarchy */
-	struct tnode *unconnected;		/* Unconnected inodes */
 	struct ext2_sb_wrap sb_wrap;	/* Superblock instance */
-	struct ext2_grpdesc *grp_descs;	/* Group descriptor table */
+	struct ext2_grpdesc *grp_descs;	/* Group descriptor tables */
 } ext2_context_t;
+
 
 /**
  * EXT2 error codes
@@ -268,7 +289,9 @@ enum ext2_error_code
 	EXT2_INO_MODE_ERR,
 };
 
+
 typedef enum ext2_error_code ext2_err_t;
+
 
 /**
  * Befor use, block_size must be properly initialized
@@ -278,7 +301,9 @@ static inline off_t block_seek(dev_t device, block_t block_id, int whence)
 	return lseek64(device, block_id * block_size, whence);
 };
 
+
 /* ext2_fscheck.c */
+
 
 /**
  * @brief Returns pointer to statically allocated inode structure 
@@ -286,11 +311,13 @@ static inline off_t block_seek(dev_t device, block_t block_id, int whence)
  */
 struct ext2_inode* ext2_get_inode_entry(struct ext2_sb_wrap*, u32);
 
+
 /**
  * @brief Returns pointer to statically allocated group descriptor table entry at given index
  * and NULL if group descriptor table index is not valid 
  */
 struct ext2_group_desc* ext2_get_group_desc(struct ext2_sb_wrap *, u32);
+
 
 /**
  * @brief Returns pointer to statically allocated super block structure
@@ -298,13 +325,15 @@ struct ext2_group_desc* ext2_get_group_desc(struct ext2_sb_wrap *, u32);
  */
 struct ext2_super_block *ext2_get_superblock(dev_t, block_t);
 
+
 /**
  * @brief Checks superblock consistency
  */
 ext2_err_t ext2_check_superblock(dev_t dev, struct ext2_super_block *);
 
+
 /**
- * @brief Checks whether the group contains superblock copy based on 
+ * @brief Checks whether the group contains superblock backup based on 
  * sparce feature. 
  * Return value:
  * 	0 - if group contains super block

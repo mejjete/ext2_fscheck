@@ -61,6 +61,12 @@ struct ext2_super_block *ext2_get_superblock(dev_t device, block_t block_id)
     return &sb;
 }
 
+block_t ext2_get_data_block(struct ext2_super_block *sb, struct ext2_inode *ino, u32 index)
+{
+    if(!sb || !ino)
+        return 0;
+}
+
 ext2_err_t ext2_check_superblock(dev_t dev, struct ext2_super_block *sb)
 {
     /* Check for a block size */
@@ -91,7 +97,6 @@ ext2_err_t ext2_check_superblock(dev_t dev, struct ext2_super_block *sb)
     }
 
     /* Check for an inode size */
-
     {
         if(sb->s_rev_level > 1)
             return EXT2_SUPER_REV_ERR;
@@ -141,7 +146,7 @@ ext2_err_t ext2_check_superblock(dev_t dev, struct ext2_super_block *sb)
     return EXT2_NO_ERR;
 }
 
-static inline bool check_ino_mode(u32 mode, u32 flag)
+static inline bool check_value(u32 mode, u32 flag)
 {
     if((mode | flag) != flag)
         return false;
@@ -155,19 +160,19 @@ ext2_err_t ext2_check_inode(struct ext2_inode *ino)
         u32 mask_ino = ino->i_mode & 0xF0000;
         bool is_valid = false;
 
-        if(check_ino_mode(mask_ino, EXT2_S_IFREG))
+        if(check_value(mask_ino, EXT2_S_IFREG))
             is_valid = true;
-        else if(check_ino_mode(mask_ino, EXT2_S_IFSOCK))
+        else if(check_value(mask_ino, EXT2_S_IFSOCK))
             is_valid = true;
-        else if(check_ino_mode(mask_ino, EXT2_S_IFLNK))
+        else if(check_value(mask_ino, EXT2_S_IFLNK))
             is_valid = true;
-        else if(check_ino_mode(mask_ino, EXT2_S_IFBLK))
+        else if(check_value(mask_ino, EXT2_S_IFBLK))
             is_valid = true;
-        else if(check_ino_mode(mask_ino, EXT2_S_IFDIR))
+        else if(check_value(mask_ino, EXT2_S_IFDIR))
             is_valid = true;
-        else if(check_ino_mode(mask_ino, EXT2_S_IFCHR))
+        else if(check_value(mask_ino, EXT2_S_IFCHR))
             is_valid = true;
-        else if(check_ino_mode(mask_ino, EXT2_S_IFIFO))
+        else if(check_value(mask_ino, EXT2_S_IFIFO))
             is_valid = true;
         
         if(!is_valid)
