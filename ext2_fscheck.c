@@ -1,7 +1,9 @@
 #include <ext2fs.h>
 #include <misc.h>
 
+
 extern size_t block_size;
+
 
 int ext2_is_grp_contains_sb(struct ext2_super_block *sb, u32 grp_ind)
 {
@@ -15,6 +17,7 @@ int ext2_is_grp_contains_sb(struct ext2_super_block *sb, u32 grp_ind)
 
     return 0;
 }
+
 
 struct ext2_inode* ext2_get_inode_entry(struct ext2_sb_wrap* sb_wrap, u32 inode_ind)
 {
@@ -36,6 +39,7 @@ struct ext2_inode* ext2_get_inode_entry(struct ext2_sb_wrap* sb_wrap, u32 inode_
     return &inode;
 }
 
+
 struct ext2_group_desc* ext2_get_group_desc(struct ext2_sb_wrap *sb_wrap, u32 group_ind)
 {
     static struct ext2_group_desc gd;
@@ -50,6 +54,7 @@ struct ext2_group_desc* ext2_get_group_desc(struct ext2_sb_wrap *sb_wrap, u32 gr
     return &gd;
 }
 
+
 struct ext2_super_block *ext2_get_superblock(dev_t device, block_t block_id)
 {
     static struct ext2_super_block sb;
@@ -61,11 +66,6 @@ struct ext2_super_block *ext2_get_superblock(dev_t device, block_t block_id)
     return &sb;
 }
 
-block_t ext2_get_data_block(struct ext2_super_block *sb, struct ext2_inode *ino, u32 index)
-{
-    if(!sb || !ino)
-        return 0;
-}
 
 ext2_err_t ext2_check_superblock(dev_t dev, struct ext2_super_block *sb)
 {
@@ -146,12 +146,14 @@ ext2_err_t ext2_check_superblock(dev_t dev, struct ext2_super_block *sb)
     return EXT2_NO_ERR;
 }
 
+
 static inline bool check_value(u32 mode, u32 flag)
 {
     if((mode | flag) != flag)
         return false;
     return true;
 }
+
 
 ext2_err_t ext2_check_inode(struct ext2_inode *ino)
 {
