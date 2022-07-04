@@ -58,7 +58,10 @@ extern size_t block_size;
 #define EXT2_S_IFBLK	0x6000
 #define EXT2_S_IFDIR	0x4000
 #define EXT2_S_IFCHR	0x2000
-#define EXT2_S_IFIFO	0x1000
+#define EXT2_S_IFIFO	0x1000 
+
+
+#define EXT2_S_ISDIR(X)	(((X) & EXT2_S_IFDIR) == EXT2_S_IFDIR) 
 
 
 /**
@@ -349,7 +352,7 @@ ext2_err_t ext2_check_inode(struct ext2_inode *);
 /* pass1.c */
 
 /**/
-void ext2_fsck_pass1(ext2_context_t *);
+void ext2_fsck_pass1(ext2_context_t *, ino_t);
 
 /* message.c */
 
