@@ -25,7 +25,7 @@ typedef struct ext2_block_stream ext2_BLK;
 
 /**
  * @brief Opens directory with specified inode number.
- * @return Pointer to heap-allocated handler, NULL if error is occurred.
+ * @return Block stream object.
  */
 ext2_DIR *ext2_open_dir(ext2_context_t *, ino_t);
 
@@ -33,7 +33,7 @@ ext2_DIR *ext2_open_dir(ext2_context_t *, ino_t);
  * @brief Opens inode block array pointer as stream.
  * @return Pointer to heap-allocated handler, NULL if error is occurred.
  */
-ext2_BLK *ext2_open_blk(ext2_context_t *, struct ext2_inode *);
+ext2_BLK ext2_open_blk(ext2_context_t *, struct ext2_inode *);
 
 /**
  * @brief Reads one-per-call block from block stream 
@@ -47,5 +47,14 @@ block_t ext2_read_blk(ext2_BLK *);
  * if error is occurred or at the end of directory stream 
  */
 struct ext2_dir_entry_2 *ext2_read_dir(ext2_context_t *, ext2_DIR *);
+
+/**
+ * @brief Frees directory stream
+ */
+static inline void ext2_close_dir(ext2_DIR *dr)
+{
+    if(dr)
+        free(dr);
+}
 
 #endif // EXR2_DIRECTORY_H

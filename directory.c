@@ -24,19 +24,17 @@ typedef struct ext2_directory_stream
 } ext2_DIR;
 
 
-ext2_BLK *ext2_open_blk(ext2_context_t *fs_ctx, struct ext2_inode *inode)
+ext2_BLK ext2_open_blk(ext2_context_t *fs_ctx, struct ext2_inode *inode)
 {
-    ext2_BLK *block_stream;
-    if((block_stream = malloc(sizeof(ext2_BLK))) == NULL)
-        return NULL;
+    static ext2_BLK block_stream;
     
-    block_stream->device = fs_ctx->sb_wrap.device;
-    block_stream->index = 0;
+    block_stream.device = fs_ctx->sb_wrap.device;
+    block_stream.index = 0;
 
-    memcpy(block_stream->d_blocks, inode->i_block, sizeof(u32) * EXT2_IND_BLOCK);
-    block_stream->i_block = inode->i_block[EXT2_IND_BLOCK];
-    block_stream->di_block = inode->i_block[EXT2_DIND_BLOCK];
-    block_stream->ti_block = inode->i_block[EXT2_TIND_BLOCK];
+    memcpy(block_stream.d_blocks, inode->i_block, sizeof(u32) * EXT2_IND_BLOCK);
+    block_stream.i_block = inode->i_block[EXT2_IND_BLOCK];
+    block_stream.di_block = inode->i_block[EXT2_DIND_BLOCK];
+    block_stream.ti_block = inode->i_block[EXT2_TIND_BLOCK];
 
     return block_stream;
 }
@@ -117,7 +115,7 @@ ext2_DIR *ext2_open_dir(ext2_context_t *fs_ctx, ino_t inode)
 
     dir_stream->offset = 0;
     dir_stream->inode = ind;
-    dir_stream->block_stream = *ext2_open_blk(fs_ctx, &ind);
+    dir_stream->block_stream = ext2_open_blk(fs_ctx, &ind);
     dir_stream->block = ext2_read_blk(&dir_stream->block_stream);
 
     return dir_stream;
