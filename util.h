@@ -1,0 +1,54 @@
+#ifndef EXT2_UTILITY_H
+#define EXT2_UTILITY_H
+
+
+#include <ext2fs.h>
+
+
+struct bitmap
+{
+    u8 *bm;
+    u32 size;
+};
+
+
+/* util.c */
+
+
+/**
+ * @brief Creates bitmap with specified size.
+ * 
+ * @return Pointer to statically-allocated bitmap handler.
+ */
+struct bitmap *bm_creat(u32);
+
+
+/**
+ * @brief Sets the i-th value to 1.
+ * Bitmap indexing starts with 0.
+ * 
+ * @return Value representing the current state of 
+ * selected entry:
+ * -1 - invalid index
+ * 0 - entry is set successfully
+ */
+int bm_set(struct bitmap *, u32);
+
+
+/**
+ * @brief Gets the i-th value entry.
+ * Bitmap indexing starts with 0.
+ * 
+ * @return Value at the given index,
+ * -1 if index is out of bounds.
+ */
+int bm_get(struct bitmap *, u32);
+
+
+/**
+ * @brief Frees the allocated bitmap.
+ */
+void bm_release();
+
+
+#endif // EXT2_UTILITY_H
