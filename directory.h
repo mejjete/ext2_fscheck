@@ -1,5 +1,6 @@
 #ifndef EXR2_DIRECTORY_H
 #define EXR2_DIRECTORY_H
+ 
 
 #include <ext2fs.h>
 
@@ -25,26 +26,30 @@ typedef struct ext2_block_stream ext2_BLK;
 
 /**
  * @brief Opens directory with specified inode number.
+ * 
  * @return Block stream object.
  */
 ext2_DIR *ext2_open_dir(ext2_context_t *, ino_t);
 
 /**
  * @brief Opens inode block array pointer as stream.
+ * 
  * @return Pointer to heap-allocated handler, NULL if error is occurred.
  */
 ext2_BLK ext2_open_blk(ext2_context_t *, struct ext2_inode *);
 
 /**
- * @brief Reads one-per-call block from block stream 
- * @return Next block number
+ * @brief Reads one-per-call block from block stream.
+ * 
+ * @return Next block number.
  */
 block_t ext2_read_blk(ext2_BLK *);
 
 /**
  * @brief Reads one-per-call entry from directory stream.
- * @return pointer to statically-allocated directory entry handler, NULL
- * if error is occurred or at the end of directory stream 
+ * 
+ * @return Pointer to statically-allocated directory entry handler, 
+ * NULL if error is occurred or end of directory stream is reached. 
  */
 struct ext2_dir_entry_2 *ext2_read_dir(ext2_context_t *, ext2_DIR *);
 
