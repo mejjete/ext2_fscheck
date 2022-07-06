@@ -1,20 +1,13 @@
 #include <ext2fs.h>
 #include <misc.h>
-#include <tree.h>
+#include <directory.h>
+
 
 size_t block_size;
-void set_bitmap(u8 *bitmap, u32 ind);
+
 
 int main()
-{
-    u8 *bitmap = malloc(355);
-    memset(bitmap, 0, 355);
-    set_bitmap(bitmap, 9);
-    printf("[%d]---[%d]---[%d]---[%d]\n", bitmap[1], bitmap[2], bitmap[3], bitmap[4]);
-
-    return 0;
-    
-    
+{    
     int fd;
     if((fd = open64("/dev/sdb1", O_RDONLY | O_NONBLOCK)) < 0)
         err_sys("error opening device: /dev/sdb1");  // PP
@@ -31,7 +24,6 @@ int main()
 
     if(retval != EXT2_NO_ERR)
         printf("SUPER BLOCK ERROR: %s\n", ext2_strerror(retval));
-    ext2_sb_print(&ext2_sb.sb);
 
     /* Allocate group descriptors layout */
     u32 grp_count = ext2_sb.sb.s_inodes_count / ext2_sb.sb.s_inodes_per_group;
@@ -43,23 +35,22 @@ int main()
 
     for(u32 i = 0; i < grp_count; i++)
     {
-        u8 *local_inode_bitmap;
-        if((local_inode_bitmap = malloc(ext2_sb.sb.s_inodes_per_group / 8)) == NULL)
-            err_sys("memory exhausted");
-        
-        u8 *local_data_bitmap;
-        if((local_data_bitmap = malloc(ext2_sb.sb.s_blocks_per_group / 8)) == NULL)
-            err_sys("memory exhausted");
-        
-        memset(local_inode_bitmap, 0, ext2_sb.sb.s_inodes_per_group / 8);
-        memset(local_data_bitmap, 0, ext2_sb.sb.s_blocks_per_group / 8);
-        
+        struct bitmap *local_inode_bitmap = 
+            bm_creat(ext2_sb.sb.s_inodes_per_group / 8);
+        if(!local_inode_bitmap)
+            err_sys("inode bitmap creation error");
+
+        struct bitmap *local_data_bitmap = 
+            bm_creat(ext2_sb.sb.s_blocks_per_group / 8);
+        if(!local_data_bitmap)
+            err_sys("data bitmap creation error");
+
         e2_cont.grp_descs[i].free_inodes_count = 0;
-        e2_cont.grp_descs[i].inode_bitmap = local_inode_bitmap;
-        e2_cont.grp_descs[i].data_bitmap = local_data_bitmap;
+        e2_cont.grp_descs[i].inode_bitmap = *local_inode_bitmap;
+        e2_cont.grp_descs[i].data_bitmap = *local_data_bitmap;
     }
 
-    ext2_fsck_pass1(&e2_cont);
+    ext2_fsck_pass1(&e2_cont, 2);
 
     return 0;
 }

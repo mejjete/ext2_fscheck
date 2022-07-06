@@ -1,23 +1,34 @@
 #include <ext2fs.h>
-#include <tree.h>
+#include <misc.h>
+#include <directory.h>
+#include <util.h>
 
-/* Inode and data bitmaps */
-static u8 *inode_bitmap;
-static u8 *data_bitmap;
 
-void ext2_fsck_pass1()
+void ext2_fsck_pass1(ext2_context_t *fs_ctx, ino_t dir_ino)
 {
-    /**
-     * Inode and data bitmaps always occupy 1 block
-     */
-    if((inode_bitmap = malloc(block_size)) == NULL)
-        err_sys("memory exhausted");
+    if(!fs_ctx)
+        return;
     
-    if((data_bitmap = malloc(block_size)) == NULL)
+    ext2_DIR *dir = ext2_open_dir(fs_ctx, dir_ino);
+    if(dir == NULL)
+        return;
+
+    struct ext2_dir_entry_2 *direntry;
+
+    while((direntry = ext2_read_dir(fs_ctx, dir)) != NULL)
     {
-        free(inode_bitmap);
-        err_sys("memory exhausted");
+        if(strcmp(direntry->name, ".") == 0 || 
+            strcmp(direntry->name, "..") == 0)
+            continue;
+
+        if(EXT2_FT_ISDIR(direntry->file_type))
+        {
+            if(strcmp(direntry->name, "lost+found") == 0)
+                continue;
+
+            ext2_fsck_pass1(fs_ctx, direntry->inode);
+        }
     }
 
-    
+    ext2_close_dir(dir);
 }

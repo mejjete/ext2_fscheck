@@ -1,6 +1,7 @@
 #include <ext2fs.h>
 #include <misc.h>
 
+
 const char *ext2_strerror(ext2_err_t errcode)
 {
     switch (errcode)
@@ -23,6 +24,7 @@ const char *ext2_strerror(ext2_err_t errcode)
         return "no such error"; 
     }
 }
+
 
 void ext2_sb_print(struct ext2_super_block *sb)
 {
@@ -52,6 +54,7 @@ void ext2_sb_print(struct ext2_super_block *sb)
     printf("[SB] Revision: %u\n", sb->s_rev_level);
 }
 
+
 void ext2_gd_print(struct ext2_group_desc *gd)
 {
     printf("[GD] Block bitmap: %u\n", gd->bg_block_bitmap);
@@ -59,6 +62,7 @@ void ext2_gd_print(struct ext2_group_desc *gd)
     printf("[GD] Inode table: %u\n", gd->bg_inode_table);
     printf("[GD] Free inodes: %u\n", gd->bg_free_inodes_count);
 }
+
 
 void ext2_inode_print(struct ext2_inode *inode)
 {

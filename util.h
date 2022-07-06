@@ -2,7 +2,7 @@
 #define EXT2_UTILITY_H
 
 
-#include <ext2fs.h>
+#include <ext2_config.h>
 
 
 struct bitmap
@@ -49,6 +49,10 @@ int bm_get(struct bitmap *, u32);
  * @brief Frees the allocated bitmap.
  */
 void bm_release();
+
+
+bool is_power_of(u32, u32);
+void err_sys(const char *);
 
 
 #endif // EXT2_UTILITY_H

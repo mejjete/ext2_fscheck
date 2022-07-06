@@ -1,26 +1,9 @@
 #ifndef EXT2FS_H
 #define EXT2FS_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <errno.h>
-#include <string.h>
-#include <fcntl.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <linux/kernel.h>
 
-
-typedef uint8_t u8;
-typedef uint16_t u16;
-typedef uint32_t u32;
-
-
-typedef u32 block_t;
-typedef u32 bitmap_id;
+#include <ext2_config.h>
+#include <util.h>
 
 
 extern size_t block_size;
@@ -259,8 +242,8 @@ struct ext2_sb_wrap
 struct ext2_grpdesc
 {
 	u32 free_inodes_count;
-	u8 *inode_bitmap;		/* Inode bitmap related to particular group */
-	u8 *data_bitmap;		/* Data bitmap related to particular group */
+	struct bitmap inode_bitmap;		/* Inode bitmap related to particular group */
+	struct bitmap data_bitmap;		/* Data bitmap related to particular group */
 };
 
 
@@ -345,18 +328,23 @@ ext2_err_t ext2_check_superblock(dev_t dev, struct ext2_super_block *);
  */
 int ext2_is_grp_contains_sb(struct ext2_super_block *, u32);
 
+
 /**/
 ext2_err_t ext2_check_inode(struct ext2_inode *);
 
 
 /* pass1.c */
 
+
 /**/
 void ext2_fsck_pass1(ext2_context_t *, ino_t);
 
+
 /* message.c */
+
 
 /**/
 const char *ext2_strerror(ext2_err_t);
+
 
 #endif // EXT2FS_H
