@@ -20,15 +20,15 @@ int ext2_is_grp_contains_sb(struct ext2_super_block *sb, u32 grp_ind)
 }
 
 
-struct ext2_inode* ext2_get_inode_entry(struct ext2_sb_wrap* sb_wrap, u32 inode_ind)
+struct ext2_inode* ext2_get_inode(struct ext2_sb_wrap* sb_wrap, u32 inode_ind)
 {
     static struct ext2_inode inode;
 
     if(inode_ind > sb_wrap->sb.s_inodes_count)
         return NULL;    // invalid inode index
 
-    u32 block_group_id = (inode_ind - 1) / sb_wrap->sb.s_inodes_per_group;
-    u32 inode_id = (inode_ind - 1) % sb_wrap->sb.s_inodes_per_group;
+    u32 block_group_id = inode_ind / sb_wrap->sb.s_inodes_per_group;
+    u32 inode_id = inode_ind % sb_wrap->sb.s_inodes_per_group;
     struct ext2_group_desc *l_gd = ext2_get_group_desc(sb_wrap, block_group_id);
 
     if(l_gd == NULL)

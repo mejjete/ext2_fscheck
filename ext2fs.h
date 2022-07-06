@@ -53,15 +53,7 @@ extern size_t block_size;
 #define EXT2_INDEX_FL	0x00001000
 
 
-/**
- * Function wrappers
- */
-#define ext2_get_inode_bm_entry(WRAP, GD, BIT_ID) \
-	get_bitmap_entry((WRAP), (GD)->bg_inode_bitmap, (WRAP)->sb.s_inodes_per_group, BIT_ID)
-
-
-#define ext2_get_data_bm_entry(WRAP, GB, BIT_ID) \
-	get_bitmap_entry((WRAP), (GB)->bg_block_bitmap, (WRAP)->sb.s_blocks_per_group, BIT_ID)
+#define EXT2_ROOT_DIR 1
 
 
 /**
@@ -251,6 +243,7 @@ typedef struct ext2_fscontext
 {
 	struct ext2_sb_wrap sb_wrap;	/* Superblock instance */
 	struct ext2_grpdesc *grp_descs;	/* Group descriptor tables */
+	struct bitmap dir_bitmap;		/* Directory bitmap */
 } ext2_context_t;
 
 
@@ -295,7 +288,7 @@ static inline off_t block_seek(dev_t device, block_t block_id, int whence)
  * @brief Returns pointer to statically allocated inode structure 
  * and NULL if inode index is not valid
  */
-struct ext2_inode* ext2_get_inode_entry(struct ext2_sb_wrap*, u32);
+struct ext2_inode* ext2_get_inode(struct ext2_sb_wrap*, u32);
 
 
 /**
