@@ -53,7 +53,7 @@ extern size_t block_size;
 #define EXT2_INDEX_FL	0x00001000
 
 
-#define EXT2_ROOT_DIR 1
+#define EXT2_ROOT_DIR 	2
 
 
 /**

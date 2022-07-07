@@ -24,11 +24,15 @@ struct ext2_inode* ext2_get_inode(struct ext2_sb_wrap* sb_wrap, u32 inode_ind)
 {
     static struct ext2_inode inode;
 
-    if(inode_ind > sb_wrap->sb.s_inodes_count)
+    /** 
+     * Inode index must be greater than 0 (inode indexing starts with 1) 
+     * and less or equal maximum_inodes_per_file_system
+    */
+    if(inode_ind > sb_wrap->sb.s_inodes_count || inode_ind == 0)
         return NULL;    // invalid inode index
 
-    u32 block_group_id = inode_ind / sb_wrap->sb.s_inodes_per_group;
-    u32 inode_id = inode_ind % sb_wrap->sb.s_inodes_per_group;
+    u32 block_group_id = (inode_ind - 1) / sb_wrap->sb.s_inodes_per_group;
+    u32 inode_id = (inode_ind - 1) % sb_wrap->sb.s_inodes_per_group;
     struct ext2_group_desc *l_gd = ext2_get_group_desc(sb_wrap, block_group_id);
 
     if(l_gd == NULL)
@@ -71,10 +75,11 @@ struct ext2_super_block *ext2_get_superblock(dev_t device, block_t block_id)
 ext2_err_t ext2_check_superblock(dev_t dev, struct ext2_super_block *sb)
 {
     /* Check for a block size */
+
     /**
-     * On Linux, kernel is able to mount only file systems with block-size smaller
+     * On Linux, kernel allowed to mount file systems only with block-size smaller
      * or equal to the system page size, hence the upper bound for a resonable
-     * block-size is get from the operating system limits
+     * block-size is obtained from the operating system limits
      */
     long upper_bound = sysconf(_SC_PAGE_SIZE);
     if(upper_bound > 0)
