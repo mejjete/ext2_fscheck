@@ -105,7 +105,7 @@ block_t ext2_read_blk(ext2_BLK *blk_stream)
 
 ext2_DIR *ext2_open_dir(ext2_context_t *fs_ctx, ino_t inode)
 {
-    struct ext2_inode ind = *ext2_get_inode_entry(&fs_ctx->sb_wrap, inode);
+    struct ext2_inode ind = *ext2_get_inode(&fs_ctx->sb_wrap, inode);
     if(!EXT2_S_ISDIR(ind.i_mode))
         return NULL;
 
@@ -127,6 +127,25 @@ struct ext2_dir_entry_2 *ext2_read_dir(ext2_context_t *fs_ctx, ext2_DIR *direntr
     if(!fs_ctx && !direntry)
         return NULL;
 
+    /**
+     * Directory structure is damaged
+     */
+    if(direntry->offset > block_size)
+        return NULL;
+
+    /**
+     * If offset within directory is equal to block size, it means
+     * that next directory entry is located right in the next block
+     */    
+    if(direntry->offset == block_size)
+    {
+        direntry->offset = 0;
+        block_t next_block = ext2_read_blk(&direntry->block_stream);
+        if(next_block == 0)
+            return NULL;
+        direntry->block = next_block;
+    }
+
     struct ext2_sb_wrap *sb_wrap = &fs_ctx->sb_wrap;
     dev_t device = sb_wrap->device;
     
@@ -147,22 +166,6 @@ struct ext2_dir_entry_2 *ext2_read_dir(ext2_context_t *fs_ctx, ext2_DIR *direntr
     read(device, dir->name, dir->name_len);
     
     direntry->offset += dir->rec_len;
-
-    if(direntry->offset > block_size)
-        return NULL;
-
-    /**
-     * If offset within directory is equal to block size, it means
-     * that next directory entry is located right in the next block
-     */    
-    if(direntry->offset == block_size)
-    {
-        direntry->offset = 0;
-        block_t next_block = ext2_read_blk(&direntry->block_stream);
-        if(next_block == 0)
-            return NULL;
-        direntry->block = next_block;
-    }
 
     return dir;
 }
