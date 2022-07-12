@@ -28,7 +28,7 @@ ext2_BLK ext2_open_blk(ext2_context_t *fs_ctx, struct ext2_inode *inode)
 {
     static ext2_BLK block_stream;
     
-    block_stream.device = fs_ctx->sb_wrap.device;
+    block_stream.device = fs_ctx->device;
     block_stream.index = 0;
 
     memcpy(block_stream.d_blocks, inode->i_block, sizeof(u32) * EXT2_IND_BLOCK);
@@ -105,7 +105,7 @@ block_t ext2_read_blk(ext2_BLK *blk_stream)
 
 ext2_DIR *ext2_open_dir(ext2_context_t *fs_ctx, ino_t inode)
 {
-    struct ext2_inode ind = *ext2_get_inode(&fs_ctx->sb_wrap, inode);
+    struct ext2_inode ind = *ext2_get_inode(fs_ctx, inode);
     if(!EXT2_S_ISDIR(ind.i_mode))
         return NULL;
 
@@ -146,8 +146,7 @@ struct ext2_dir_entry_2 *ext2_read_dir(ext2_context_t *fs_ctx, ext2_DIR *direntr
         direntry->block = next_block;
     }
 
-    struct ext2_sb_wrap *sb_wrap = &fs_ctx->sb_wrap;
-    dev_t device = sb_wrap->device;
+    dev_t device = fs_ctx->device;
     
     block_seek(device, direntry->block, SEEK_SET);
     lseek64(device, direntry->offset, SEEK_CUR);

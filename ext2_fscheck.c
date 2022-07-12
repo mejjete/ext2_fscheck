@@ -20,7 +20,7 @@ int ext2_is_grp_contains_sb(struct ext2_super_block *sb, u32 grp_ind)
 }
 
 
-struct ext2_inode* ext2_get_inode(struct ext2_sb_wrap* sb_wrap, u32 inode_ind)
+struct ext2_inode* ext2_get_inode(ext2_context_t *fs_ctx, u32 inode_ind)
 {
     static struct ext2_inode inode;
 
@@ -28,34 +28,34 @@ struct ext2_inode* ext2_get_inode(struct ext2_sb_wrap* sb_wrap, u32 inode_ind)
      * Inode index must be greater than 0 (inode indexing starts with 1) 
      * and less or equal maximum_inodes_per_file_system
     */
-    if(inode_ind > sb_wrap->sb.s_inodes_count || inode_ind == 0)
+    if(inode_ind > fs_ctx->sb.s_inodes_count || inode_ind == 0)
         return NULL;    // invalid inode index
 
-    u32 block_group_id = (inode_ind - 1) / sb_wrap->sb.s_inodes_per_group;
-    u32 inode_id = (inode_ind - 1) % sb_wrap->sb.s_inodes_per_group;
-    struct ext2_group_desc *l_gd = ext2_get_group_desc(sb_wrap, block_group_id);
+    u32 block_group_id = (inode_ind - 1) / fs_ctx->sb.s_inodes_per_group;
+    u32 inode_id = (inode_ind - 1) % fs_ctx->sb.s_inodes_per_group;
+    struct ext2_group_desc *l_gd = ext2_get_group_desc(fs_ctx, block_group_id);
 
     if(l_gd == NULL)
         return NULL;
 
-    block_seek(sb_wrap->device, l_gd->bg_inode_table, SEEK_SET);
-    lseek64(sb_wrap->device, sb_wrap->sb.s_inode_size * inode_id, SEEK_CUR);
-    read(sb_wrap->device, &inode, sizeof(struct ext2_inode));
+    block_seek(fs_ctx->device, l_gd->bg_inode_table, SEEK_SET);
+    lseek64(fs_ctx->device, fs_ctx->sb.s_inode_size * inode_id, SEEK_CUR);
+    read(fs_ctx->device, &inode, sizeof(struct ext2_inode));
     return &inode;
 }
 
 
-struct ext2_group_desc* ext2_get_group_desc(struct ext2_sb_wrap *sb_wrap, u32 group_ind)
+struct ext2_group_desc* ext2_get_group_desc(ext2_context_t *fs_ctx, u32 group_ind)
 {
     static struct ext2_group_desc gd;
-    size_t group_tables_count = 1 + (sb_wrap->sb.s_blocks_count - 1) / sb_wrap->sb.s_blocks_per_group;
+    size_t group_tables_count = 1 + (fs_ctx->sb.s_blocks_count - 1) / fs_ctx->sb.s_blocks_per_group;
 
     if(group_ind > group_tables_count)
         return NULL;
     
-    block_seek(sb_wrap->device, sb_wrap->sb.s_first_data_block + 1, SEEK_SET);
-    lseek64(sb_wrap->device, group_ind * sizeof(struct ext2_group_desc), SEEK_CUR);
-    read(sb_wrap->device, &gd, sizeof(struct ext2_group_desc));
+    block_seek(fs_ctx->device, fs_ctx->sb.s_first_data_block + 1, SEEK_SET);
+    lseek64(fs_ctx->device, group_ind * sizeof(struct ext2_group_desc), SEEK_CUR);
+    read(fs_ctx->device, &gd, sizeof(struct ext2_group_desc));
     return &gd;
 }
 

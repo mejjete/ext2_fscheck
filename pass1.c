@@ -8,8 +8,6 @@ void ext2_fsck_pass1(ext2_context_t *fs_ctx, ino_t dir_ino)
 {
     if(!fs_ctx)
         return;
-    
-    struct ext2_sb_wrap *sb_wrap = &fs_ctx->sb_wrap;
 
     ext2_DIR *dir = ext2_open_dir(fs_ctx, dir_ino);
     if(dir == NULL)
@@ -23,13 +21,10 @@ void ext2_fsck_pass1(ext2_context_t *fs_ctx, ino_t dir_ino)
             strcmp(direntry->name, "..") == 0)
             continue;
 
-        struct ext2_inode *inode = ext2_get_inode(sb_wrap, direntry->inode);
+        struct ext2_inode *inode = ext2_get_inode(fs_ctx, direntry->inode);
         
         /* Check inode as unconnected object */
-        ext2_err_t errcode = ext2_check_inode(inode);
-        printf("CHECKED: %s\n", direntry->name);
-        getchar();
-        
+        ext2_err_t errcode = ext2_check_inode(inode);        
         if(errcode != EXT2_NO_ERR)
             ext2_strerror(errcode);
 

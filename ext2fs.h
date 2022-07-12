@@ -29,7 +29,8 @@ extern size_t block_size;
 #define EXT2_MAGIC  		0xEF53
 
 
-#define EXT2_IS_SPARSE_FEAT(X) (((X)->s_feature_ro_compat & 0x0001) != 0)
+#define EXT2_IS_SPARSE_FEAT(X) 		(((X)->s_feature_ro_compat & 0x0001) != 0)
+#define EXT2_INODE_GRP_IND(S, I)	(((I) - 1) / (S).s_inodes_per_group)
 
 
 /**
@@ -224,26 +225,20 @@ struct ext2_dir_entry_2
 };
 
 
-struct ext2_sb_wrap
-{
-	dev_t device;					/* Device ID on which filesystem is resides */
-	struct ext2_super_block sb;		/* Super block */
-};
-
-
-struct ext2_grpdesc
-{
-	u32 free_inodes_count;
-	struct bitmap inode_bitmap;		/* Inode bitmap related to particular group */
-	struct bitmap data_bitmap;		/* Data bitmap related to particular group */
-};
-
-
 typedef struct ext2_fscontext
 {
-	struct ext2_sb_wrap sb_wrap;	/* Superblock instance */
-	struct ext2_grpdesc *grp_descs;	/* Group descriptor tables */
-	struct bitmap dir_bitmap;		/* Directory bitmap */
+	struct ext2_super_block sb;			/* Super lock instance */					
+	struct bitmap *inode_bitmap;		/* Inode bitmap related to particular group */
+	struct bitmap *data_bitmap;			/* Data bitmap related to particular group */
+	struct bitmap *dir_bitmap;			/* Directory bitmap */
+
+	/**
+	 * Arrray of pointers, each of which belongs to each group
+	 * descriptor table entry and represents the number of 
+	 * free inodes
+	 */
+	u32 *grp_limits;
+	dev_t device;					/* Device ID on which filesystem is resides */
 } ext2_context_t;
 
 
@@ -288,14 +283,14 @@ static inline off_t block_seek(dev_t device, block_t block_id, int whence)
  * @brief Returns pointer to statically allocated inode structure 
  * and NULL if inode index is not valid
  */
-struct ext2_inode* ext2_get_inode(struct ext2_sb_wrap*, u32);
+struct ext2_inode* ext2_get_inode(ext2_context_t *, u32);
 
 
 /**
  * @brief Returns pointer to statically allocated group descriptor table entry at given index
  * and NULL if group descriptor table index is not valid 
  */
-struct ext2_group_desc* ext2_get_group_desc(struct ext2_sb_wrap *, u32);
+struct ext2_group_desc* ext2_get_group_desc(ext2_context_t *, u32);
 
 
 /**
@@ -308,7 +303,7 @@ struct ext2_super_block *ext2_get_superblock(dev_t, block_t);
 /**
  * @brief Checks superblock consistency
  */
-ext2_err_t ext2_check_superblock(dev_t dev, struct ext2_super_block *);
+ext2_err_t ext2_check_superblock(dev_t, struct ext2_super_block *);
 
 
 /**
@@ -324,6 +319,14 @@ int ext2_is_grp_contains_sb(struct ext2_super_block *, u32);
 
 /**/
 ext2_err_t ext2_check_inode(struct ext2_inode *);
+
+
+/**/
+int ext2_set_ino_bm(ext2_context_t *, ino_t);
+
+
+/**/
+int ext2_get_ino_bm(ext2_context_t *, ino_t);
 
 
 /* pass1.c */
