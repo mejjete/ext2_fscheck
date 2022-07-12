@@ -26,7 +26,7 @@ struct bitmap *bm_creat(u32 size)
     if(size == 0)
         return NULL;
 
-    u32 elems = (size / sizeof(char)) + 1;
+    u32 elems = (size / CHAR_BIT) + 1;
 
     if((btm.bm = malloc(elems)) == NULL)
         return NULL;
@@ -47,6 +47,18 @@ int bm_set(struct bitmap *btm, u32 index)
     
     *byte |= (1 << bit);
     return 0;
+}
+
+
+int bm_get(struct bitmap *btm, u32 index)
+{
+    if(index > btm->size)
+        return -1;
+    
+    u8 byte = *(btm->bm + (index / CHAR_BIT));
+    u8 bit = index % CHAR_BIT;
+
+    return (byte >> bit) & 1;
 }
 
 

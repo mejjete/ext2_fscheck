@@ -48,7 +48,11 @@ int bm_get(struct bitmap *, u32);
 /**
  * @brief Frees the allocated bitmap.
  */
-void bm_release();
+static inline void bm_release(struct bitmap *btm)
+{
+    if(btm && btm->bm)
+        free(btm->bm);
+}
 
 
 bool is_power_of(u32, u32);
