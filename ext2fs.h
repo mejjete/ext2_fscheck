@@ -228,9 +228,9 @@ struct ext2_dir_entry_2
 typedef struct ext2_fscontext
 {
 	struct ext2_super_block sb;			/* Super lock instance */					
-	struct bitmap *inode_bitmap;		/* Inode bitmap related to particular group */
-	struct bitmap *data_bitmap;			/* Data bitmap related to particular group */
-	struct bitmap *dir_bitmap;			/* Directory bitmap */
+	struct bitmap *inode_bitmap;		/* Global inode bitmap */
+	struct bitmap *data_bitmap;			/* Global data bitmap */
+	struct bitmap *dir_bitmap;			/* Global directory bitmap */
 
 	/**
 	 * Arrray of pointers, each of which belongs to each group
@@ -248,10 +248,11 @@ typedef struct ext2_fscontext
 enum ext2_error_code
 {
 	EXT2_NO_ERR,
+	EXT2_INVAL_IND_ERR,
+	EXT2_MESS_ERR,
 
 	/* Superblock error codes */
-
-	EXT2_SUPER_BLK_ERR,
+	EXT2_SUPER_BLK_SZ_ERR,
 	EXT2_SUPER_IND_PER_GRP_ERR,
 	EXT2_SUPER_REV_ERR,
 	EXT2_SUPER_IND_SZ_ERR,
@@ -259,8 +260,12 @@ enum ext2_error_code
 	EXT2_SUPER_BLK_CNT_ERR,
 
 	/* Inode error codes */
-	
 	EXT2_INO_MODE_ERR,
+
+	/* Group descriptor table error codes */
+	EXT2_GROUP_INO_TABLE_ERR,
+	EXT2_GROUP_INO_BITMAP_ERR,
+	EXT2_GROUP_DATA_BITMAP_ERR
 };
 
 
@@ -304,6 +309,12 @@ struct ext2_super_block *ext2_get_superblock(dev_t, block_t);
  * @brief Checks superblock consistency
  */
 ext2_err_t ext2_check_superblock(dev_t, struct ext2_super_block *);
+
+
+/**
+ * @brief Checks group descriptor table's most vulnerable values
+ */
+ext2_err_t ext2_check_group_desc(ext2_context_t *, u32);
 
 
 /**

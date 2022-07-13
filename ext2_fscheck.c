@@ -12,6 +12,9 @@ int ext2_is_grp_contains_sb(struct ext2_super_block *sb, u32 grp_ind)
     if(grp_ind > group_count)
         return -1;
 
+    if(grp_ind == 0)
+        return 1;
+
     if(EXT2_IS_SPARSE_FEAT(sb))
         if(is_power_of(grp_ind, 3) || is_power_of(grp_ind, 5) || is_power_of(grp_ind, 7))
             return 1;
@@ -82,13 +85,11 @@ ext2_err_t ext2_check_superblock(dev_t dev, struct ext2_super_block *sb)
      * block-size is obtained from the operating system limits
      */
     long upper_bound = sysconf(_SC_PAGE_SIZE);
-    if(upper_bound > 0)
-        upper_bound %= 1024;
-    else
-        upper_bound = 3;        /* If PAGESIZE is not specified, guess the upper limit */
+    if(upper_bound < 0)
+        upper_bound = 1024 << 3;        /* If PAGESIZE is not specified, guess the upper limit */
         
-    if(sb->s_log_block_size > upper_bound)
-        return EXT2_SUPER_BLK_ERR;
+    if((1024 << sb->s_log_block_size) > upper_bound)
+        return EXT2_SUPER_BLK_SZ_ERR;
 
     /* Check for an inode size */
     if(sb->s_rev_level > 1)
@@ -133,37 +134,97 @@ ext2_err_t ext2_check_superblock(dev_t dev, struct ext2_super_block *sb)
 }
 
 
-static inline bool check_value(u32 mode, u32 flag)
-{
-    if((mode | flag) != flag)
-        return false;
-    return true;
-}
-
-
 ext2_err_t ext2_check_inode(struct ext2_inode *ino)
 {
     /* Check for an inode mode */
     u32 mask_ino = ino->i_mode & 0xF0000;
     bool is_valid = false;
 
-    if(check_value(mask_ino, EXT2_S_IFREG))
+    if(check_flag(mask_ino, EXT2_S_IFREG))
         is_valid = true;
-    else if(check_value(mask_ino, EXT2_S_IFSOCK))
+    else if(check_flag(mask_ino, EXT2_S_IFSOCK))
         is_valid = true;
-    else if(check_value(mask_ino, EXT2_S_IFLNK))
+    else if(check_flag(mask_ino, EXT2_S_IFLNK))
         is_valid = true;
-    else if(check_value(mask_ino, EXT2_S_IFBLK))
+    else if(check_flag(mask_ino, EXT2_S_IFBLK))
         is_valid = true;
-    else if(check_value(mask_ino, EXT2_S_IFDIR))
+    else if(check_flag(mask_ino, EXT2_S_IFDIR))
         is_valid = true;
-    else if(check_value(mask_ino, EXT2_S_IFCHR))
+    else if(check_flag(mask_ino, EXT2_S_IFCHR))
         is_valid = true;
-    else if(check_value(mask_ino, EXT2_S_IFIFO))
+    else if(check_flag(mask_ino, EXT2_S_IFIFO))
         is_valid = true;
     
     if(!is_valid)
         return EXT2_INO_MODE_ERR;
 
     return EXT2_NO_ERR;
+}
+
+
+ext2_err_t ext2_check_group_desc(ext2_context_t *fs_ctx, u32 grp_ind)
+{
+    struct ext2_group_desc *grp;
+    if((grp = ext2_get_group_desc(fs_ctx, grp_ind)) == NULL)
+        return EXT2_INVAL_IND_ERR;
+    
+    struct ext2_super_block *sb = &fs_ctx->sb;
+
+    block_t inode_table_blocks = (sb->s_inode_size * sb->s_inodes_per_group) / block_size;
+    u32 group_count = sb->s_inodes_count / sb->s_inodes_per_group;
+
+    bool is_copy_grp = ext2_is_grp_contains_sb(sb, grp_ind) == 1 ? 1 : 0;
+    u32 grp_start = grp_ind * sb->s_blocks_per_group;
+    u32 grp_end = grp_start + sb->s_blocks_per_group;
+    block_t inode_bm = grp->bg_inode_bitmap;
+    block_t data_bm = grp->bg_block_bitmap;
+    block_t inode_tb = grp->bg_inode_table;
+
+    /**
+     * Due to default 1024 offset at the beginning of the 
+     * device, in case with block size equal to 1024 block
+     * group descriptor starts right on next block
+     */
+    if(grp_ind == 0)
+    {
+        if(block_size == 1024)
+            grp_start++;
+    }
+
+    /* Block group descriptor table might occuppie more than one block */
+    if(is_copy_grp)
+        grp_start += 1 + ((group_count * sizeof(struct ext2_group_desc)) / block_size);
+
+    /* Group boundaries might be reduced if it is a last group */
+    if(grp_ind == group_count - 1)
+    {
+        u32 last_inodes = sb->s_inodes_count - (sb->s_inodes_per_group * grp_ind);
+        grp_end = grp_start + (last_inodes / block_size) - 1;
+    }
+
+    ext2_err_t retcode = EXT2_NO_ERR;
+
+    /* Check an inode bitmap */
+    if(inode_bm < grp_start || inode_bm > grp_end)
+        retcode = EXT2_GROUP_INO_BITMAP_ERR;
+
+    /* Check a data bitmap */
+    if(data_bm < grp_start || inode_tb > grp_end)
+        retcode = EXT2_GROUP_DATA_BITMAP_ERR;
+    
+    /* Check an inode table boundaries */
+    if(inode_tb < grp_start || inode_tb > (grp_end - inode_table_blocks))
+        retcode = EXT2_GROUP_INO_TABLE_ERR;
+    
+    /* Check whether these values are intersect */
+    if(inode_bm == data_bm)
+        retcode = EXT2_MESS_ERR;
+
+    if(inode_bm >= inode_tb && inode_bm <= inode_tb + inode_table_blocks)
+        retcode = EXT2_MESS_ERR;
+    
+    if(data_bm >= inode_tb && data_bm <= inode_tb + inode_table_blocks)
+        retcode = EXT2_MESS_ERR;
+
+    return retcode;
 }

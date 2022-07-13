@@ -55,6 +55,17 @@ static inline void bm_release(struct bitmap *btm)
 }
 
 
+/**
+ * @brief ORs mode with flag
+ */
+static inline bool check_flag(u32 mode, u32 flag)
+{
+    if((mode | flag) != flag)
+        return false;
+    return true;
+}
+
+
 bool is_power_of(u32, u32);
 void err_sys(const char *);
 
