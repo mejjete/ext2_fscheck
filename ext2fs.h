@@ -58,7 +58,7 @@ extern size_t block_size;
 
 
 /**
- * Structure of the super block (from ext2_fs.h)
+ * Structure of the superblock (from ext2_fs.h)
  *
  * Packed attribute specified to simplify read-and-match the 
  * supeblock structure. Most majority of fields are redudant
@@ -294,7 +294,7 @@ struct ext2_group_desc* ext2_get_group_desc(ext2_context_t *, u32);
 
 
 /**
- * @brief Returns pointer to statically allocated super block structure
+ * @brief Returns pointer to statically allocated superblock structure
  * and NULL if superblock is violated
  */
 struct ext2_super_block *ext2_get_superblock(dev_t, block_t);
@@ -310,8 +310,8 @@ ext2_err_t ext2_check_superblock(dev_t, struct ext2_super_block *);
  * @brief Checks whether the group contains superblock backup based on 
  * sparce feature. 
  * Return value:
- * 	0 - if group contains super block
- * 	1 - if group does not contain super block
+ * 	0 - if group contains superblock
+ * 	1 - if group does not contain superblock
  * -1 - invalid group index
  */
 int ext2_is_grp_contains_sb(struct ext2_super_block *, u32);
@@ -321,12 +321,29 @@ int ext2_is_grp_contains_sb(struct ext2_super_block *, u32);
 ext2_err_t ext2_check_inode(struct ext2_inode *);
 
 
-/**/
-int ext2_set_ino_bm(ext2_context_t *, ino_t);
+static inline int ext2_set_bm(ext2_context_t *fs_ctx, struct bitmap *bm, ino_t inode)
+{
+	if(inode == 0)
+		return -1;
+	
+	/* Inode index start with 1 */
+	if(bm == fs_ctx->inode_bitmap || bm == fs_ctx->dir_bitmap)
+		inode--;
+
+	return bm_set(fs_ctx->inode_bitmap, inode - 1);
+}
 
 
-/**/
-int ext2_get_ino_bm(ext2_context_t *, ino_t);
+static inline int ext2_get_bm(ext2_context_t *fs_ctx, struct bitmap *bm, ino_t inode)
+{
+	if(inode == 0)
+		return -1;
+	
+	if(bm == fs_ctx->inode_bitmap || bm == fs_ctx->dir_bitmap)
+		inode--;
+
+	return bm_get(fs_ctx->inode_bitmap, inode - 1);
+}
 
 
 /* pass1.c */
