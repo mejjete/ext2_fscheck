@@ -83,20 +83,10 @@ ext2_err_t ext2_check_superblock(dev_t dev, struct ext2_super_block *sb)
      */
     long upper_bound = sysconf(_SC_PAGE_SIZE);
     if(upper_bound > 0)
-    {
-        int power = 0;
-        while(upper_bound > 1024)
-        {
-            upper_bound >>= 1;
-            power++;
-        }
-
-        upper_bound = power;
-    }
+        upper_bound %= 1024;
     else
         upper_bound = 3;        /* If PAGESIZE is not specified, guess the upper limit */
         
-
     if(sb->s_log_block_size > upper_bound)
         return EXT2_SUPER_BLK_ERR;
 
