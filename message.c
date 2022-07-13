@@ -4,25 +4,54 @@
 
 const char *ext2_strerror(ext2_err_t errcode)
 {
+    const char *strerror;
+
     switch (errcode)
     {
     case EXT2_NO_ERR:
-        return "no error";
-    case EXT2_SUPER_BLK_ERR:
-        return "invalid blocks count";
+        strerror = "no error";
+        break;
+    case EXT2_INVAL_IND_ERR:
+        strerror = "invalid index";
+        break;
+    case EXT2_MESS_ERR:
+        strerror = "mess";
+        break;
+    case EXT2_SUPER_BLK_SZ_ERR:
+        strerror = "invalid blocks count";
+        break;
     case EXT2_SUPER_IND_PER_GRP_ERR:
-        return "invalid inodes per group";
+        strerror = "invalid inodes per group";
+        break;
     case EXT2_SUPER_REV_ERR:
-        return "invalid revision";
+        strerror = "invalid revision";
+        break;
     case EXT2_SUPER_IND_SZ_ERR:
-        return "invalid inode size";
+        strerror = "invalid inode size";
+        break;
     case EXT2_SUPER_BLK_PER_GRP_ERR:
-        return "invalid blocks per group";
+        strerror = "invalid blocks per group";
+        break;
     case EXT2_SUPER_BLK_CNT_ERR:
-        return "invalid block count";
+        strerror = "invalid block count";
+        break;
+    case EXT2_INO_MODE_ERR: 
+        strerror = "invalid inode mode";
+        break;
+    case EXT2_GROUP_INO_TABLE_ERR:
+        strerror = "invalid inode table block";
+        break;
+    case EXT2_GROUP_INO_BITMAP_ERR:
+        strerror = "invalid inode bitmap block";
+        break;
+    case EXT2_GROUP_DATA_BITMAP_ERR:
+        strerror = "invalid data bitmap block";
+        break;
     default:
-        return "no such error"; 
+        strerror = "no such error"; 
     }
+
+    return strerror;
 }
 
 
