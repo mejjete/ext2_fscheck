@@ -51,9 +51,10 @@ struct ext2_inode* ext2_get_inode(ext2_context_t *fs_ctx, u32 inode_ind)
 struct ext2_group_desc* ext2_get_group_desc(ext2_context_t *fs_ctx, u32 group_ind)
 {
     static struct ext2_group_desc gd;
-    size_t group_tables_count = 1 + (fs_ctx->sb.s_blocks_count - 1) / fs_ctx->sb.s_blocks_per_group;
+    size_t group_tables_count = fs_ctx->sb.s_inodes_count / fs_ctx->sb.s_inodes_per_group;
 
-    if(group_ind > group_tables_count)
+    /* Group descriptor table index starts with 0 */
+    if(group_ind > group_tables_count - 1)
         return NULL;
     
     block_seek(fs_ctx->device, fs_ctx->sb.s_first_data_block + 1, SEEK_SET);

@@ -364,11 +364,4 @@ static inline int ext2_get_bm(ext2_context_t *fs_ctx, struct bitmap *bm, ino_t i
 void ext2_fsck_pass1(ext2_context_t *, ino_t);
 
 
-/* message.c */
-
-
-/**/
-const char *ext2_strerror(ext2_err_t);
-
-
 #endif // EXT2FS_H
