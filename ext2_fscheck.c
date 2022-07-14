@@ -196,13 +196,6 @@ ext2_err_t ext2_check_group_desc(ext2_context_t *fs_ctx, u32 grp_ind)
     if(is_copy_grp)
         grp_start += 1 + ((group_count * sizeof(struct ext2_group_desc)) / block_size);
 
-    /* Group boundaries might be reduced if it is a last group */
-    if(grp_ind == group_count - 1)
-    {
-        u32 last_inodes = sb->s_inodes_count - (sb->s_inodes_per_group * grp_ind);
-        grp_end = grp_start + (last_inodes / block_size) - 1;
-    }
-
     ext2_err_t retcode = EXT2_NO_ERR;
 
     /* Check an inode bitmap */
