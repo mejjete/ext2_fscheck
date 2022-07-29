@@ -23,9 +23,16 @@ int main()
     ext2_err_t retval = ext2_check_superblock(fs_ctx.device, &fs_ctx.sb);
 
     if(retval != EXT2_NO_ERR)
-        printf("SUPER BLOCK ERROR: %s\n", ext2_strerror(retval));
+        printf("super block error: %s\n", ext2_strerror(retval));
 
     u32 grp_count = fs_ctx.sb.s_inodes_count / fs_ctx.sb.s_inodes_per_group;
+
+    for(u32 i = 0; i < grp_count; i++)
+    {
+        retval = ext2_check_group_desc(&fs_ctx, i);
+        if(retval != EXT2_NO_ERR)
+            printf("%d group table descriptors error: %s\n", i, ext2_strerror(retval));
+    }
 
     if((fs_ctx.inode_bitmap = bm_creat(fs_ctx.sb.s_inodes_per_group * grp_count)) == NULL)
         err_sys("can't create inode bitmap");

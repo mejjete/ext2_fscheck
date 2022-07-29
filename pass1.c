@@ -2,8 +2,9 @@
 #include <misc.h>
 #include <directory.h>
 #include <util.h>
+#include <ino_ops.h>
 
-
+    
 void ext2_fsck_pass1(ext2_context_t *fs_ctx, ino_t dir_ino)
 {
     if(!fs_ctx)
@@ -30,11 +31,15 @@ void ext2_fsck_pass1(ext2_context_t *fs_ctx, ino_t dir_ino)
 
         if(EXT2_FT_ISDIR(direntry->file_type))
         {
+            ext2_set_bm(fs_ctx, fs_ctx->dir_bitmap, direntry->inode);
+
             if(strcmp(direntry->name, "lost+found") == 0)
                 continue;
 
             ext2_fsck_pass1(fs_ctx, direntry->inode);
         }
+
+        ext2_set_bm(fs_ctx, fs_ctx->inode_bitmap, direntry->inode);
     }
 
     ext2_close_dir(dir);
