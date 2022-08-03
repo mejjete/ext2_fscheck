@@ -114,13 +114,13 @@ static struct block_struct *read_ind_blk(dev_t device, struct indirect_blk *iblk
 
     if(iblk->index == 0)
     {
-        temp = make_blk_context(iblk->block, DIRECT_BLK);
+        temp = make_blk_context(iblk->block, INDIRECT_BLK);
         iblk->index++;
         return &temp;
     }
 
     block_t blk = read_block(device, iblk->block, iblk->index - 1);
-    temp = make_blk_context(blk, INDIRECT_BLK);
+    temp = make_blk_context(blk, DIRECT_BLK);
 
     /* Stream tail points to a direct block */
     if(iblk->next == NULL)
