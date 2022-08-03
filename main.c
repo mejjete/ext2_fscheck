@@ -19,7 +19,6 @@ int main()
     lseek64(fd, 1024, SEEK_SET);
     read(fd, &fs_ctx.sb, EXT2_SUPER_SIZE);
     block_size = 1024 << fs_ctx.sb.s_log_block_size;    
-
     ext2_err_t retval = ext2_check_superblock(fs_ctx.device, &fs_ctx.sb);
 
     if(retval != EXT2_NO_ERR)
@@ -37,15 +36,17 @@ int main()
     if((fs_ctx.inode_bitmap = bm_creat(fs_ctx.sb.s_inodes_per_group * grp_count)) == NULL)
         err_sys("can't create inode bitmap");
     
-    if((fs_ctx.inode_bitmap = bm_creat(fs_ctx.sb.s_inodes_per_group * grp_count)) == NULL)
+    if((fs_ctx.dir_bitmap = bm_creat(fs_ctx.sb.s_inodes_per_group * grp_count)) == NULL)
         err_sys("can't create dir bitmap");
 
-    if((fs_ctx.inode_bitmap = bm_creat(fs_ctx.sb.s_blocks_per_group * grp_count)) == NULL)
+    if((fs_ctx.data_bitmap = bm_creat(fs_ctx.sb.s_blocks_per_group * grp_count)) == NULL)
         err_sys("can't create data bitmap");
 
     if((fs_ctx.grp_limits = malloc(sizeof(u32) * grp_count)) == NULL)
         err_sys("can't create group descriptor limits");
 
+    /* Pass 1 */
+    printf("Pass 1: Checking file system hierarchy\n");
     ext2_fsck_pass1(&fs_ctx, EXT2_ROOT_DIR);
 
     return 0;

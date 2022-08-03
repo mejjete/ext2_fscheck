@@ -249,6 +249,7 @@ enum ext2_error_code
 {
 	EXT2_NO_ERR,
 	EXT2_INVAL_IND_ERR,
+	EXT2_INVAL_BLK_ERR,
 	EXT2_MESS_ERR,
 
 	/* Superblock error codes */
@@ -272,9 +273,7 @@ enum ext2_error_code
 typedef enum ext2_error_code ext2_err_t;
 
 
-/**
- * Befor use, block_size must be properly initialized
- */
+/* Befor use, block_size must be properly initialized */
 static inline off_t block_seek(dev_t device, block_t block_id, int whence)
 {
 	return lseek64(device, block_id * block_size, whence);
@@ -305,15 +304,11 @@ struct ext2_group_desc* ext2_get_group_desc(ext2_context_t *, u32);
 struct ext2_super_block *ext2_get_superblock(dev_t, block_t);
 
 
-/**
- * @brief Checks superblock consistency
- */
+/** @brief Checks superblock consistency */
 ext2_err_t ext2_check_superblock(dev_t, struct ext2_super_block *);
 
 
-/**
- * @brief Checks group descriptor table's most vulnerable values
- */
+/** @brief Checks group descriptor table's most vulnerable values */
 ext2_err_t ext2_check_group_desc(ext2_context_t *, u32);
 
 
@@ -332,28 +327,27 @@ int ext2_is_grp_contains_sb(struct ext2_super_block *, u32);
 ext2_err_t ext2_check_inode(struct ext2_inode *);
 
 
-static inline int ext2_set_bm(ext2_context_t *fs_ctx, struct bitmap *bm, ino_t inode)
+
+static inline int ext2_set_bm(ext2_context_t *fs_ctx, struct bitmap *bm, u32 index)
 {
-	if(inode == 0)
+	if(index == 0)
 		return -1;
 	
 	/* Inode index start with 1 */
 	if(bm == fs_ctx->inode_bitmap || bm == fs_ctx->dir_bitmap)
-		inode--;
-
-	return bm_set(fs_ctx->inode_bitmap, inode - 1);
+		index--;
+	return bm_set(bm, index);
 }
 
 
-static inline int ext2_get_bm(ext2_context_t *fs_ctx, struct bitmap *bm, ino_t inode)
+static inline int ext2_get_bm(ext2_context_t *fs_ctx, struct bitmap *bm, u32 index)
 {
-	if(inode == 0)
+	if(index == 0)
 		return -1;
 	
 	if(bm == fs_ctx->inode_bitmap || bm == fs_ctx->dir_bitmap)
-		inode--;
-
-	return bm_get(fs_ctx->inode_bitmap, inode - 1);
+		index--;
+	return bm_get(bm, index);
 }
 
 
