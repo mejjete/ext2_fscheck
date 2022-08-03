@@ -72,8 +72,9 @@ struct ext2_dir_entry_2 *ext2_read_dir(ext2_context_t *fs_ctx, ext2_DIR *direntr
     dir->name_len = *((u8 *) (buff + 6));
     dir->file_type = *((u8 *) (buff + 7));
     read(device, dir->name, dir->name_len);
-    
     direntry->offset += dir->rec_len;
 
+    if(dir->inode == 0)
+        return NULL;
     return dir;
 }
