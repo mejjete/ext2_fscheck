@@ -80,6 +80,7 @@ static struct indirect_blk *open_ind_blk(dev_t device, block_t block, u32 dimens
     iblock->block = block;
     iblock->dim = dimension;
     iblock->index = 0;
+    iblock->next = NULL;
     dimension--;
 
     for(u32 i = dimension; i > 0; i--)
