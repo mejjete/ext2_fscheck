@@ -12,7 +12,6 @@ static bool check_blk(u32 upper, u32 lower, block_t blk)
     return true;
 }
 
-block_t get_block(ext2_DIR *);
 
 void ext2_fsck_pass1(ext2_context_t *fs_ctx, ino_t dir_ino)
 {
@@ -37,11 +36,13 @@ void ext2_fsck_pass1(ext2_context_t *fs_ctx, ino_t dir_ino)
         if(errcode != EXT2_NO_ERR)
             printf("Inode %d has invalid inode format\n", direntry->inode);
 
+
         /* Check if a blocks occupied by an inode are within a valid range */
         ext2_BLK *blk_stream = ext2_open_blk(fs_ctx, inode);
         struct block_struct *blk;
         u32 blk_lower = fs_ctx->sb.s_first_data_block;
         u32 blk_upper = fs_ctx->sb.s_blocks_count; 
+
 
         while((blk = ext2_read_blk(blk_stream)) != NULL)
         {
@@ -58,6 +59,7 @@ void ext2_fsck_pass1(ext2_context_t *fs_ctx, ino_t dir_ino)
         }
         ext2_free_blk(blk_stream);
 
+
         if(EXT2_FT_ISDIR(direntry->file_type))
         {
             ext2_set_bm(fs_ctx, fs_ctx->dir_bitmap, direntry->inode);
@@ -65,6 +67,7 @@ void ext2_fsck_pass1(ext2_context_t *fs_ctx, ino_t dir_ino)
                 continue;
             ext2_fsck_pass1(fs_ctx, direntry->inode);
         }
+
 
         u32 ind_grp_id = EXT2_INODE_GRP_IND(fs_ctx->sb, direntry->inode);
         fs_ctx->grp_ilimits[ind_grp_id]++;
