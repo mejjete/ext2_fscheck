@@ -37,13 +37,20 @@ int main()
         err_sys("can't create inode bitmap");
     
     if((fs_ctx.dir_bitmap = bm_creat(fs_ctx.sb.s_inodes_per_group * grp_count)) == NULL)
-        err_sys("can't create dir bitmap");
+        err_sys("can't create directory bitmap");
 
     if((fs_ctx.data_bitmap = bm_creat(fs_ctx.sb.s_blocks_per_group * grp_count)) == NULL)
         err_sys("can't create data bitmap");
 
-    if((fs_ctx.grp_limits = malloc(sizeof(u32) * grp_count)) == NULL)
-        err_sys("can't create group descriptor limits");
+    if((fs_ctx.grp_ilimits = malloc(sizeof(u32) * grp_count)) == NULL)
+        err_sys("can't create inode group limits");
+
+    if((fs_ctx.grp_blimits = malloc(sizeof(u32) * grp_count)) == NULL)
+        err_sys("can't create block group limits");
+
+    /* 0th group contains reserved inodes */
+    fs_ctx.grp_ilimits = fs_ctx.sb.s_first_ino;
+    memset(fs_ctx.grp_blimits, 0, sizeof(int) * sizeof(u32) * grp_count);
 
     /* Pass 1 */
     printf("Pass 1: Checking file system hierarchy\n");

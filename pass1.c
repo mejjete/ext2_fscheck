@@ -51,6 +51,9 @@ void ext2_fsck_pass1(ext2_context_t *fs_ctx, ino_t dir_ino)
                     direntry->inode, blk->block);
                 break;
             }
+
+            u32 blk_grp_id = EXT2_BLOCK_GRP_IND(fs_ctx->sb, blk->block);
+            fs_ctx->grp_blimits[blk_grp_id]++;
             ext2_set_bm(fs_ctx, fs_ctx->data_bitmap, blk->block);
         }
         ext2_free_blk(blk_stream);
@@ -62,6 +65,9 @@ void ext2_fsck_pass1(ext2_context_t *fs_ctx, ino_t dir_ino)
                 continue;
             ext2_fsck_pass1(fs_ctx, direntry->inode);
         }
+
+        u32 ind_grp_id = EXT2_INODE_GRP_IND(fs_ctx->sb, direntry->inode);
+        fs_ctx->grp_ilimits[ind_grp_id]++;
         ext2_set_bm(fs_ctx, fs_ctx->inode_bitmap, direntry->inode);
     }
 

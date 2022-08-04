@@ -31,6 +31,7 @@ extern size_t block_size;
 
 #define EXT2_IS_SPARSE_FEAT(X) 		(((X)->s_feature_ro_compat & 0x0001) != 0)
 #define EXT2_INODE_GRP_IND(S, I)	(((I) - 1) / (S).s_inodes_per_group)
+#define EXT2_BLOCK_GRP_IND(S, B)	((B) / (S).s_blocks_per_group)
 
 
 /**
@@ -235,9 +236,10 @@ typedef struct ext2_fscontext
 	/**
 	 * Arrray of pointers, each of which belongs to each group
 	 * descriptor table entry and represents the number of 
-	 * free inodes
+	 * free inodes/blocks
 	 */
-	u32 *grp_limits;
+	u32 *grp_ilimits;
+	u32 *grp_blimits;
 	dev_t device;					/* Device ID on which filesystem is resides */
 } ext2_context_t;
 
