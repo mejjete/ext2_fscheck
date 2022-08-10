@@ -43,10 +43,11 @@ static struct block_struct make_blk_context(block_t block, block_type blk_type)
 
 static void free_ind_blk(struct indirect_blk *blk)
 {
-    while (blk != NULL)
+    while(blk != NULL)
     {
+        struct indirect_blk *temp = blk;
         blk = blk->next;
-        free(blk);
+        free(temp);
     }
 }
 
@@ -139,11 +140,13 @@ static struct block_struct *read_ind_blk(dev_t device, struct indirect_blk *iblk
         {
             u32 dim = iblk->next->dim;
             free_ind_blk(iblk->next);
+            iblk->next = NULL;
 
             if(iblk->index + 1 > entry_per_block)
                 return NULL;
 
             iblk->index++;
+            blk = read_block(device, iblk->block, iblk->index - 1);
             iblk->next = open_ind_blk(device, blk, dim);
             return read_ind_blk(device, iblk->next);
         }
@@ -179,8 +182,11 @@ struct block_struct *ext2_read_blk(ext2_BLK *blk_stream)
             b = read_ind_blk(device, blk_stream->iblk);
             if(b != NULL)
                 break;
-            else 
+            else
+            {
+                free_ind_blk(blk_stream->iblk);
                 blk_stream->iblk = NULL;
+            } 
         }
 
         // Indirect blocks

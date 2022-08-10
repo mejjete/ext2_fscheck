@@ -356,7 +356,23 @@ static inline int ext2_get_bm(ext2_context_t *fs_ctx, struct bitmap *bm, u32 ind
 /* pass1.c */
 
 
-/**/
+/**
+ * @brief Pass 1 iterates all over the inodes in the file system starting at 
+ * the specified inode and gathers all information about on-disk file system
+ * structure.
+ * 
+ * The information is packed into ext2_context_t structure to allow for a next
+ * steps to use it. The information about inodes, blocks and directories location
+ * are placed into bitmaps.
+ * 
+ * During pass 1 fsck builds next bitmaps:
+ * inode_bitmap - bitmap of occupied inodes in a file system
+ * data_bitmap - bitmap of occupied data blocks in a file system
+ * dir_bitmamp - bitmap of directory block entries in a file system  
+ * 
+ * Additional information such as: number of occupied inodes/blocks are localized 
+ * and packed into separate array and do not directly belong to a bitmap. 
+ */
 void ext2_fsck_pass1(ext2_context_t *, ino_t);
 
 

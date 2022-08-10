@@ -49,11 +49,11 @@ int main()
         err_sys("can't create block group limits");
 
     /* 0th group contains reserved inodes */
-    fs_ctx.grp_ilimits = fs_ctx.sb.s_first_ino;
-    memset(fs_ctx.grp_blimits, 0, sizeof(int) * sizeof(u32) * grp_count);
+    fs_ctx.grp_ilimits[0] = fs_ctx.sb.s_first_ino;
+    memset(fs_ctx.grp_blimits, 0, sizeof(u32) * grp_count);
 
     /* Pass 1 */
-    printf("Pass 1: Checking file system hierarchy\n");
+    // printf("Pass 1: Checking file system hierarchy\n");
     ext2_fsck_pass1(&fs_ctx, EXT2_ROOT_DIR);
 
     return 0;
