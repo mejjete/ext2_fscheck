@@ -22,18 +22,21 @@ bool is_power_of(u32 num, u32 power)
 
 struct bitmap *bm_creat(u32 size)
 {
-    static struct bitmap btm;
+    struct bitmap *btm;
     if(size == 0)
         return NULL;
 
     u32 elems = (size / CHAR_BIT) + 1;
 
-    if((btm.bm = malloc(elems)) == NULL)
+    if((btm = malloc(sizeof(struct bitmap))) == NULL)
         return NULL;
 
-    memset(btm.bm, 0, elems);
-    btm.size = elems;
-    return &btm;
+    if((btm->bm = malloc(elems)) == NULL)
+        return NULL;
+
+    memset(btm->bm, 0, elems);
+    btm->size = elems;
+    return btm;
 }
 
 

@@ -40,11 +40,7 @@ struct ext2_dir_entry_2 *ext2_read_dir(ext2_context_t *, ext2_DIR *);
 
 
 /** @brief Frees directory stream */
-static inline void ext2_close_dir(ext2_DIR *dr)
-{
-    if(dr)
-        free(dr);
-}
+void ext2_close_dir(ext2_DIR *);
 
 
 #endif // EXR2_DIRECTORY_H

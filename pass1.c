@@ -27,7 +27,10 @@ void ext2_fsck_pass1(ext2_context_t *fs_ctx, ino_t dir_ino)
     {
         if(strcmp(direntry->name, ".") == 0 || 
             strcmp(direntry->name, "..") == 0)
+        {
+            free(direntry);
             continue;
+        }
    
 
         /* Check inode as unconnected object */
@@ -72,6 +75,7 @@ void ext2_fsck_pass1(ext2_context_t *fs_ctx, ino_t dir_ino)
         u32 ind_grp_id = EXT2_INODE_GRP_IND(fs_ctx->sb, direntry->inode);
         fs_ctx->grp_ilimits[ind_grp_id]++;
         ext2_set_bm(fs_ctx, fs_ctx->inode_bitmap, direntry->inode);
+        free(direntry);
     }
 
     ext2_close_dir(dir);

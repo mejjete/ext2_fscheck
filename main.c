@@ -53,8 +53,14 @@ int main()
     memset(fs_ctx.grp_blimits, 0, sizeof(u32) * grp_count);
 
     /* Pass 1 */
-    // printf("Pass 1: Checking file system hierarchy\n");
+    printf("Pass 1: Checking file system hierarchy\n");
     ext2_fsck_pass1(&fs_ctx, EXT2_ROOT_DIR);
 
+    bm_release(fs_ctx.data_bitmap);
+    bm_release(fs_ctx.dir_bitmap);
+    bm_release(fs_ctx.inode_bitmap);
+    free(fs_ctx.grp_blimits);
+    free(fs_ctx.grp_ilimits);
+    close(fs_ctx.device);
     return 0;
 }

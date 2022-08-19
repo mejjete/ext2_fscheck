@@ -18,7 +18,7 @@ struct bitmap
 /**
  * @brief Creates bitmap with specified size.
  * 
- * @return Pointer to statically-allocated bitmap handler.
+ * @return Pointer to heap-allocated bitmap handler.
  */
 struct bitmap *bm_creat(u32);
 
@@ -52,6 +52,7 @@ static inline void bm_release(struct bitmap *btm)
 {
     if(btm && btm->bm)
         free(btm->bm);
+    free(btm);
 }
 
 

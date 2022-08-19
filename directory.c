@@ -28,7 +28,6 @@ ext2_DIR *ext2_open_dir(ext2_context_t *fs_ctx, ino_t inode)
     dir_stream->inode = ind;
     dir_stream->block_stream = ext2_open_blk(fs_ctx, &ind);
     dir_stream->block = ext2_read_data_blk(dir_stream->block_stream);
-
     return dir_stream;
 }
 
@@ -75,6 +74,18 @@ struct ext2_dir_entry_2 *ext2_read_dir(ext2_context_t *fs_ctx, ext2_DIR *direntr
     direntry->offset += dir->rec_len;
 
     if(dir->inode == 0)
+    {
+        free(dir);
         return NULL;
+    }
     return dir;
+}
+
+
+void ext2_close_dir(ext2_DIR *dr)
+{
+    if(dr)
+        if(dr->block_stream)
+            free(dr->block_stream);
+    free(dr);
 }
